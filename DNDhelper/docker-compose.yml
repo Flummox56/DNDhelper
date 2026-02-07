@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: auth_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: authdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  authservice:
+    build: .
+    container_name: auth_service
+    depends_on:
+      - postgres
+    environment:
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+    ports:
+      - "5000:80"
+    volumes:
+      - .:/app
+    command: ["dotnet", "AuthService.dll"]
+
+volumes:
+  postgres_data:
