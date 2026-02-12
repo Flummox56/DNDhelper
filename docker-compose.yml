@@ -1,9 +1,18 @@
 services:
   dndhelper:
-    image: ${DOCKER_REGISTRY-}dndhelper
     build:
       context: .
       dockerfile: DNDhelper/Dockerfile
+    container_name: dndhelper-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=auth_db;Username=auth_user;Password=auth_password
+    ports:
+      - "8080:8080"
 
   postgres:
     image: postgres:16
@@ -17,7 +26,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
