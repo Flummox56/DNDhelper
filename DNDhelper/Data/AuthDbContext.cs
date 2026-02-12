@@ -5,6 +5,10 @@ namespace DNDhelper.Data
 {
     public class AuthDbContext : DbContext
     {
+        public AuthDbContext()
+        {
+        }
+
         public AuthDbContext(DbContextOptions<AuthDbContext> options)
             : base(options)
         {
@@ -12,6 +16,14 @@ namespace DNDhelper.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Session> Sessions { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=auth_db;Username=auth_user;Password=auth_password");
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
