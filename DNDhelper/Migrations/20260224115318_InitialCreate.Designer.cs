@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DNDhelper.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260212145128_InitialCreate")]
+    [Migration("20260224115318_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -32,11 +32,11 @@ namespace DNDhelper.Migrations
                         .HasColumnName("session_id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
                     b.Property<DateTime>("ExpiredAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("expired_at");
 
                     b.Property<string>("IpAddress")
@@ -73,7 +73,7 @@ namespace DNDhelper.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
                     b.Property<string>("Email")
@@ -87,7 +87,7 @@ namespace DNDhelper.Migrations
                         .HasColumnName("password");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.Property<string>("Username")

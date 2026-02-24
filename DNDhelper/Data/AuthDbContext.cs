@@ -61,12 +61,12 @@ namespace DNDhelper.Data
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("created_at")
                     .IsRequired()
-                    .HasColumnType("timestamp");
+                    .HasColumnType("timestamp with time zone");
 
                 entity.Property(e => e.UpdatedAt)
                     .HasColumnName("updated_at")
                     .IsRequired()
-                    .HasColumnType("timestamp");
+                    .HasColumnType("timestamp with time zone");
             });
 
             modelBuilder.Entity<Session>(entity =>
@@ -100,12 +100,12 @@ namespace DNDhelper.Data
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("created_at")
                     .IsRequired()
-                    .HasColumnType("timestamp");
+                    .HasColumnType("timestamp with time zone");
 
                 entity.Property(e => e.ExpiredAt)
                     .HasColumnName("expired_at")
                     .IsRequired()
-                    .HasColumnType("timestamp");
+                    .HasColumnType("timestamp with time zone");
 
                 entity.HasOne(e => e.User)
                     .WithMany(e => e.Sessions)
