@@ -16,13 +16,40 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 
 builder.Services.AddScoped<SessionService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendClient", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:4200",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:4200"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .WithExposedHeaders("Content-Disposition");
+    });
+
+    options.AddPolicy("Development", policy =>
+    {
+        policy.SetIsOriginAllowed(origin => true)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.Cookie.Name = ".AspNetCore.Cookies";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SameSite = SameSiteMode.None;
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
 
@@ -51,11 +78,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         dbContext.Database.Migrate();
-        Console.WriteLine("База данных готова! Таблицы созданы.");
+        Console.WriteLine("Database ready, tables created");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Ошибка БД: {ex.Message}");
+        Console.WriteLine($"DB error: {ex.Message}");
     }
 }
 
@@ -66,6 +93,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("Development");
 
 app.UseAuthentication();
 app.UseAuthorization();
