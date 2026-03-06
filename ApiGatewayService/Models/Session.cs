@@ -1,6 +1,6 @@
 using System;
 
-namespace DNDhelper.Models
+namespace ApiGatewayService.Models
 {
     public class Session
     {

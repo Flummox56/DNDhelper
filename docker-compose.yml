@@ -1,36 +1,102 @@
 services:
-  dndhelper:
-    build:
-      context: .
-      dockerfile: DNDhelper/Dockerfile
-    container_name: dndhelper-api
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=auth_db;Username=auth_user;Password=auth_password
-    ports:
-      - "8080:8080"
-
-  postgres:
+  api-gateway-storage:
     image: postgres:16
-    container_name: auth_postgres
+    container_name: api_gateway_storage
     restart: unless-stopped
     environment:
-      POSTGRES_DB: auth_db
-      POSTGRES_USER: auth_user
-      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: ${GATEWAY_DB_NAME}
+      POSTGRES_USER: ${GATEWAY_DB_USER}
+      POSTGRES_PASSWORD: ${GATEWAY_DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - api_gateway_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${GATEWAY_DB_USER} -d ${GATEWAY_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - dndhelper_network
+      
+  sheet-storage:
+    image: postgres:16
+    container_name: sheet_storage
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SHEET_DB_NAME}
+      POSTGRES_USER: ${SHEET_DB_USER}
+      POSTGRES_PASSWORD: ${SHEET_DB_PASSWORD}
+    ports:
+      - "5434:5432" 
+    volumes:
+      - sheet_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SHEET_DB_USER} -d ${SHEET_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dndhelper_network
+
+  api-gateway-service:
+    build:
+      context: .
+      dockerfile: ApiGatewayService/Dockerfile 
+    container_name: api_gateway_service
+    restart: unless-stopped
+    depends_on:
+      api-gateway-storage:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=api-gateway-storage;Port=5432;Database=${GATEWAY_DB_NAME};Username=${GATEWAY_DB_USER};Password=${GATEWAY_DB_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+    ports:
+      - "8081:8080"
+    networks:
+      - dndhelper_network
+
+  sheet-service:
+    build:
+      context: .
+      dockerfile: SheetService/Dockerfile
+    container_name: sheet_service
+    restart: unless-stopped
+    depends_on:
+      sheet-storage:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=sheet-storage;Port=5432;Database=${SHEET_DB_NAME};Username=${SHEET_DB_USER};Password=${SHEET_DB_PASSWORD}
+    networks:
+      - dndhelper_network
+      
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api-gateway-service
+      - sheet-service 
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - dndhelper_network
 
 volumes:
-  postgres_data:
+  api_gateway_data:
+  sheet_data:
+
+networks:
+  dndhelper_network:
+    driver: bridge

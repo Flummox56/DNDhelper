@@ -1,0 +1,6 @@
+@SheetService_HostAddress = http://localhost:5091
+
+GET {{SheetService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

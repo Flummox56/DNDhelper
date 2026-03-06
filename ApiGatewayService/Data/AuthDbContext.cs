@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using DNDhelper.Models;
+using ApiGatewayService.Models;
 
-namespace DNDhelper.Data
+namespace ApiGatewayService.Data
 {
     public class AuthDbContext : DbContext
     {

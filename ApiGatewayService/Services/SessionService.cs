@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using DNDhelper.Data;
-using DNDhelper.Models;
+using ApiGatewayService.Data;
+using ApiGatewayService.Models;
 using System.Security.Cryptography;
 
-namespace DNDhelper.Services
+namespace ApiGatewayService.Services
 {
     public class SessionService
     {

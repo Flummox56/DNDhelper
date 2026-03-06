@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DNDhelper.Models
+namespace ApiGatewayService.Models
 {
     public class RegisterRequest
     {
