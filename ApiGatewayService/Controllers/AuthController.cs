@@ -10,7 +10,7 @@ using BCrypt.Net;
 
 namespace ApiGatewayService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -92,7 +92,7 @@ namespace ApiGatewayService.Controllers
             return Ok(new { message = "Выход выполнен успешно" });
         }
 
-        [HttpGet("me")]
+        [HttpGet("profile")]
         public async Task<ActionResult<UserResponse>> GetCurrentUser()
         {
             if (!User.Identity?.IsAuthenticated ?? true)
@@ -119,6 +119,28 @@ namespace ApiGatewayService.Controllers
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
             });
+        }
+
+        [HttpGet("user/{id}")]
+        public async Task<ActionResult<UserInfo>> GetUserById(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new UserInfo
+            {
+                Id = user.Id,
+                Username = user.Username
+            });
+        }
+
+        public class UserInfo
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Username { get; set; } = string.Empty;
         }
 
         private async Task LoginUser(User user)

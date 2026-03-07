@@ -5,20 +5,22 @@ namespace SheetService.Data
 {
     public class SheetDbContext : DbContext
     {
-        public SheetDbContext() {}
+        public SheetDbContext()
+        {
+        }
 
         public SheetDbContext(DbContextOptions<SheetDbContext> options)
             : base(options)
         {
         }
 
-        public DbSet<CharacterSheet> CharacterSheets { get; set; }
+        public DbSet<Monster> Monsters { get; set; } 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=sheet_db;Username=sheet_user;Password=sheet_password");
+                optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=monster_db;Username=sheet_user;Password=sheet_password");
             }
         }
 
@@ -26,62 +28,69 @@ namespace SheetService.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<CharacterSheet>(entity =>
+            modelBuilder.Entity<Monster>(entity =>
             {
-                entity.ToTable("character_sheets");
+                entity.ToTable("monsters");
                 entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasColumnType("uuid");
 
-                entity.Property(e => e.UserId)
-                    .HasColumnName("user_id")
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
                     .IsRequired()
                     .HasColumnType("text");
 
-                entity.Property(e => e.CharacterName)
-                    .HasColumnName("character_name")
+                entity.Property(e => e.MaxHP)
+                    .HasColumnName("max_hp")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.AC)
+                    .HasColumnName("ac")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Str)
+                    .HasColumnName("str")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Dex)
+                    .HasColumnName("dex")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Con)
+                    .HasColumnName("con")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Int)
+                    .HasColumnName("int")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Wis)
+                    .HasColumnName("wis")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Cha)
+                    .HasColumnName("cha")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Danger)
+                    .HasColumnName("danger")
+                    .HasColumnType("integer");
+
+                entity.Property(e => e.Description)
+                    .HasColumnName("description")
+                    .HasColumnType("text");
+
+                entity.Property(e => e.CreatedBy)
+                    .HasColumnName("created_by")
                     .IsRequired()
                     .HasColumnType("text");
 
-                entity.Property(e => e.Race)
-                    .HasColumnName("race")
+                entity.Property(e => e.Status)
+                    .HasColumnName("status")
                     .IsRequired()
                     .HasColumnType("text");
-
-                entity.Property(e => e.Class)
-                    .HasColumnName("class")
-                    .IsRequired()
-                    .HasColumnType("text");
-
-                entity.Property(e => e.Level)
-                    .HasColumnName("level")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Strength)
-                    .HasColumnName("strength")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Dexterity)
-                    .HasColumnName("dexterity")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Constitution)
-                    .HasColumnName("constitution")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Intelligence)
-                    .HasColumnName("intelligence")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Wisdom)
-                    .HasColumnName("wisdom")
-                    .HasColumnType("integer");
-
-                entity.Property(e => e.Charisma)
-                    .HasColumnName("charisma")
-                    .HasColumnType("integer");
 
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("created_at")
@@ -91,25 +100,11 @@ namespace SheetService.Data
                     .HasColumnName("updated_at")
                     .HasColumnType("timestamp with time zone");
 
-                entity.Property(e => e.Skills)
-                    .HasColumnName("skills")
-                    .HasColumnType("jsonb");
+                entity.HasIndex(e => e.CreatedBy)
+                    .HasDatabaseName("idx_monsters_created_by");
 
-                entity.Property(e => e.Inventory)
-                    .HasColumnName("inventory")
-                    .HasColumnType("jsonb");
-
-                entity.Property(e => e.Spells)
-                    .HasColumnName("spells")
-                    .HasColumnType("jsonb");
-
-                entity.Property(e => e.Notes)
-                    .HasColumnName("notes")
-                    .HasColumnType("text");
-
-                // Индекс для быстрого поиска по userId
-                entity.HasIndex(e => e.UserId)
-                    .HasDatabaseName("idx_character_sheets_user_id");
+                entity.HasIndex(e => e.Status)
+                    .HasDatabaseName("idx_monsters_status");
             });
         }
     }

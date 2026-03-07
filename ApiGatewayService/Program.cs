@@ -49,7 +49,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = ".AspNetCore.Cookies";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
 
@@ -102,6 +102,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-//dotnet ef migrations add InitialCreate  <--- это только в директории ./DNDhelper/DNDhelper/
-//docker exec -it auth_postgres psql -U auth_user -d auth_db
