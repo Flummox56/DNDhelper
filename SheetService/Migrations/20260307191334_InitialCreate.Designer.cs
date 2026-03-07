@@ -12,7 +12,7 @@ using SheetService.Data;
 namespace SheetService.Migrations
 {
     [DbContext(typeof(SheetDbContext))]
-    [Migration("20260307185830_InitialCreate")]
+    [Migration("20260307191334_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

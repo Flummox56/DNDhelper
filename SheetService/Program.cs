@@ -9,6 +9,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<SheetDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -24,17 +25,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+/*builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.Name = ".AspNetCore.Cookies";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.Domain = "localhost";
-        options.Cookie.Path = "/"; 
+        options.Cookie.Path = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+
+        options.ForwardDefaultSelector = _ => CookieAuthenticationDefaults.AuthenticationScheme;
 
         options.Events = new CookieAuthenticationEvents
         {
@@ -52,6 +55,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+
+*/
 
 var app = builder.Build();
 
@@ -77,8 +82,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Development");
-app.UseAuthentication();
-app.UseAuthorization();
+
+//app.UseAuthentication();
+//app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -1,17 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using SheetService.Data;
 using SheetService.Models;
 using SheetService.DTOs;
-using System.Text.Json;
 
 namespace SheetService.Controllers
 {
     [Route("api/monsters")]
     [ApiController]
-    [Authorize]
     public class MonstersController : ControllerBase
     {
         private readonly SheetDbContext _context;
@@ -96,12 +92,6 @@ namespace SheetService.Controllers
         [HttpPost]
         public async Task<ActionResult<MonsterDto>> CreateMonster(CreateMonsterDto createDto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
             var monster = new Monster
             {
                 Name = createDto.Name,
@@ -115,7 +105,7 @@ namespace SheetService.Controllers
                 Cha = createDto.Cha,
                 Danger = createDto.Danger,
                 Description = createDto.Description,
-                CreatedBy = userId,
+                CreatedBy = "temp-user-id",
                 Status = createDto.Status,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -124,7 +114,7 @@ namespace SheetService.Controllers
             _context.Monsters.Add(monster);
             await _context.SaveChangesAsync();
 
-            var username = await GetUsernameFromGateway(userId);
+            var username = "temp-user";
 
             var result = new MonsterDto
             {
@@ -153,17 +143,11 @@ namespace SheetService.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult<MonsterDto>> UpdateMonster(Guid id, CreateMonsterDto updateDto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var monster = await _context.Monsters.FindAsync(id);
 
             if (monster == null)
             {
                 return NotFound();
-            }
-
-            if (monster.CreatedBy != userId)
-            {
-                return Forbid();
             }
 
             monster.Name = updateDto.Name;
@@ -211,17 +195,11 @@ namespace SheetService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMonster(Guid id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var monster = await _context.Monsters.FindAsync(id);
 
             if (monster == null)
             {
                 return NotFound();
-            }
-
-            if (monster.CreatedBy != userId)
-            {
-                return Forbid();
             }
 
             _context.Monsters.Remove(monster);
