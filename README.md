@@ -1,193 +1,100 @@
+
 # DNDhelper API
 
-## Технологии
-
-- **.NET 10.0** - backend фреймворк
-- **PostgreSQL 16** - база данных
-- **Entity Framework Core 10.0** - ORM
-- **Docker & Docker Compose** - контейнеризация
-- **Swagger/OpenAPI** - документация API
-
-## Требования
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) или Docker Engine (Linux)
-- [Git](https://git-scm.com/) (для клонирования репозитория)
-- 4-8GB свободной оперативной памяти
-- Свободные порты: **8080** (API), **5432** (PostgreSQL)
-
-## Быстрый старт
-
-### 1. Клонирование репозитория
-```bash
-git clone <url-репозитория>
-cd DNDhelper
+## Единая точка входа
+```
+http://localhost/api/...
 ```
 
-### 2. Запуск через Docker Compose
+## Swagger документация
+- Auth: http://localhost/swagger/gateway
+- Monsters: http://localhost/swagger/monsters
 
-```bash
-# Запуск контейнеров
-docker-compose up --build
+## Эндпоинты
 
-# Или в фоновом режиме
-docker-compose up --build -d
+### Auth Service (`/api/auth`)
+```
+POST   /register     - {username, email, password}
+POST   /login        - {username, password}
+GET    /profile      - информация о текущем пользователе
+POST   /logout       - выход
 ```
 
-### 3. Проверка запуска
-
-```bash
-# Проверить, что контейнеры запущены
-docker ps
-
-# Должны быть видны:
-# - dndhelper-api (порт 8080)
-# - auth_postgres (порт 5432)
+### Monsters Service (`/api/monsters`)
+```
+GET    /             - список всех монстров
+GET    /{id}         - монстр по ID
+POST   /             - создать {name, maxHP, ac, str, dex, con, int, wis, cha, danger, experience, description, status}
+PATCH  /{id}         - обновить (поля как при создании)
+DELETE /{id}         - удалить
 ```
 
-### 4. Доступ к API
-
-- **Swagger UI**: http://localhost:8080/swagger
-- **API base URL**: http://localhost:8080
-
-## API Endpoints
-
-### Авторизация (`/api/auth`)
-
-| Метод | Endpoint | Описание | Тело запроса |
-|-------|----------|----------|--------------|
-| POST | `/register` | Регистрация нового пользователя | `{ "username": "string", "email": "string", "password": "string" }` |
-| POST | `/login` | Вход в систему | `{ "username": "string", "password": "string" }` |
-| POST | `/logout` | Выход из системы | - |
-| GET | `/me` | Информация о текущем пользователе | - |
-
-## Проверка работы
-
-### Способ 1: Через Swagger UI
-
-1. Откройте http://localhost:8080/swagger
-2. Разверните нужный эндпоинт
-3. Нажмите "Try it out"
-4. Заполните данные и выполните запрос
-
-### Способ 2: Через curl
-
-```bash
-# 1. Регистрация
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-
-# 2. Вход (сохраняем cookies)
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123"
-  }' \
-  -c cookies.txt
-
-# 3. Проверка авторизации
-curl -X GET http://localhost:8080/api/auth/me \
-  -b cookies.txt
-
-# 4. Защищенный эндпоинт
-curl -X GET http://localhost:8080/api/test/protected \
-  -b cookies.txt
-
-# 5. Выход
-curl -X POST http://localhost:8080/api/auth/logout \
-  -b cookies.txt
+## Модель монстра
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "maxHP": 0,
+  "ac": 0,
+  "str": 0,
+  "dex": 0,
+  "con": 0,
+  "int": 0,
+  "wis": 0,
+  "cha": 0,
+  "danger": "low|medium|high|very high",
+  "experience": 0,
+  "description": "string",
+  "createdBy": "user-id",
+  "createdByUsername": "string",
+  "status": "private|public",
+  "createdAt": "2024-03-08T10:30:00Z",
+  "updatedAt": "2024-03-08T10:30:00Z"
+}
 ```
 
-### Способ 3: Проверка базы данных
-
-```bash
-# Подключиться к PostgreSQL
-docker exec -it auth_postgres psql -U auth_user -d auth_db
-
-# Посмотреть пользователей
-SELECT * FROM "users";
-
-# Посмотреть сессии
-SELECT * FROM "sessions";
-
-# Выйти
-\q
-```
-
-## Структура проекта
-
-```
-DNDhelper/
-├── DNDhelper/                          # Основной проект
-│   ├── Controllers/
-│   │   └── AuthController.cs           # Регистрация, логин, logout, me
-│   ├── Data/
-│   │   └── AuthDbContext.cs            # Контекст базы данных
-│   ├── Models/
-│   │   ├── User.cs                      # Модель пользователя
-│   │   ├── Session.cs                    # Модель сессии
-│   │   └── AuthModels.cs                 # Request/Response модели
-│   ├── Services/
-│   │   └── SessionService.cs             # Сервис для работы с сессиями
-│   ├── Migrations/                        # Миграции EF Core
-│   ├── appsettings.json
-│   ├── Program.cs
-│   └── DNDhelper.csproj
-├── docker-compose.yml
-├── docker-compose.override.yml
-└── README.md
-```
-
-## Конфигурация
-
-### Переменные окружения (в docker-compose.yml)
-
-```yaml
-# PostgreSQL
-POSTGRES_DB: auth_db
-POSTGRES_USER: auth_user
-POSTGRES_PASSWORD: auth_password
-
-# API
-ASPNETCORE_ENVIRONMENT: Development
-ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=auth_db;Username=auth_user;Password=auth_password
-```
-
-## Примечания
-
-1. **Базовый URL API**: `http://localhost:8080`
-2. **Авторизация** работает через cookies
-3. **Все запросы к защищенным эндпоинтам** должны включать `credentials: 'include'`
-4. **Swagger документация** доступна по адресу `/swagger`
-
-### Пример запроса с фронтенда
-
+## Пример запроса (JavaScript)
 ```javascript
-// Регистрация
-const register = async () => {
-  const response = await fetch('http://localhost:8080/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      username: 'user123',
-      email: 'user@example.com',
-      password: 'password123'
-    })
-  });
-  return response.json();
-};
+// Важно: всегда добавляйте credentials: 'include'
+fetch('http://localhost/api/monsters', {
+  credentials: 'include'
+});
 
-// Получение текущего пользователя
-const getMe = async () => {
-  const response = await fetch('http://localhost:8080/api/auth/me', {
-    credentials: 'include'
-  });
-  return response.json();
-};
+// POST с телом
+fetch('http://localhost/api/monsters', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({
+    name: "Дракон",
+    maxHP: 95,
+    ac: 17,
+    str: 18,
+    dex: 10,
+    con: 16,
+    int: 8,
+    wis: 12,
+    cha: 12,
+    danger: "high",
+    experience: 2300,
+    description: "Описание",
+    status: "private"
+  })
+});
 ```
+
+## Коды ответов
+- `200` - успех
+- `201` - создано
+- `204` - удалено (без тела)
+- `400` - неверный запрос
+- `401` - не авторизован
+- `403` - нет прав
+- `404` - не найдено
+
+## Проверка контейнеров
+```bash
+docker ps
+```
+
+Главное правило: **все запросы с `credentials: 'include'`** и базовый URL `http://localhost/api/...`
