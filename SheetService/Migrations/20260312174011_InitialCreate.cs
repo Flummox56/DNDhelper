@@ -25,9 +25,10 @@ namespace SheetService.Migrations
                     @int = table.Column<int>(name: "int", type: "integer", nullable: false),
                     wis = table.Column<int>(type: "integer", nullable: false),
                     cha = table.Column<int>(type: "integer", nullable: false),
-                    danger = table.Column<int>(type: "integer", nullable: false),
+                    danger = table.Column<double>(type: "double precision", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
                     created_by = table.Column<string>(type: "text", nullable: false),
+                    created_by_username = table.Column<string>(type: "text", nullable: false),
                     status = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -41,6 +42,12 @@ namespace SheetService.Migrations
                 name: "idx_monsters_created_by",
                 table: "monsters",
                 column: "created_by");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_monsters_created_by_name",
+                table: "monsters",
+                columns: new[] { "created_by", "name" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "idx_monsters_status",

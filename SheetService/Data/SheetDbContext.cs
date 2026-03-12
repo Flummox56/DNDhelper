@@ -76,7 +76,7 @@ namespace SheetService.Data
 
                 entity.Property(e => e.Danger)
                     .HasColumnName("danger")
-                    .HasColumnType("integer");
+                    .HasColumnType("double precision");
 
                 entity.Property(e => e.Description)
                     .HasColumnName("description")
@@ -84,6 +84,11 @@ namespace SheetService.Data
 
                 entity.Property(e => e.CreatedBy)
                     .HasColumnName("created_by")
+                    .IsRequired()
+                    .HasColumnType("text");
+
+                entity.Property(e => e.CreatedByUsername)
+                    .HasColumnName("created_by_username")
                     .IsRequired()
                     .HasColumnType("text");
 
@@ -105,6 +110,10 @@ namespace SheetService.Data
 
                 entity.HasIndex(e => e.Status)
                     .HasDatabaseName("idx_monsters_status");
+
+                entity.HasIndex(m => new { m.CreatedBy, m.Name })
+                    .IsUnique()
+                    .HasDatabaseName("idx_monsters_created_by_name");
             });
         }
     }

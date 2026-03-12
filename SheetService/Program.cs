@@ -14,6 +14,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<SheetDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddDbContext<GatewayDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("GatewayConnection")));
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", policy =>

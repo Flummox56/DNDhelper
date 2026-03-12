@@ -11,12 +11,12 @@ namespace SheetService.Controllers
     public class MonstersController : ControllerBase
     {
         private readonly SheetDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly GatewayDbContext _gatewayContext;
 
-        public MonstersController(SheetDbContext context, IHttpClientFactory httpClientFactory)
+        public MonstersController(SheetDbContext context, GatewayDbContext gatewayContext)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _gatewayContext = gatewayContext;
         }
 
         [HttpGet]
@@ -27,7 +27,7 @@ namespace SheetService.Controllers
                 .ToListAsync();
 
             var creatorIds = monsters.Select(m => m.CreatedBy).Distinct().ToList();
-            var usernames = await GetUsernamesFromGateway(creatorIds);
+            var usernames = await GetUsernamesFromDb(creatorIds);
 
             var result = monsters.Select(m => new MonsterDto
             {
@@ -63,7 +63,7 @@ namespace SheetService.Controllers
                 return NotFound();
             }
 
-            var username = await GetUsernameFromGateway(monster.CreatedBy);
+            var username = await GetUsernameFromDb(monster.CreatedBy);
 
             var result = new MonsterDto
             {
@@ -92,6 +92,51 @@ namespace SheetService.Controllers
         [HttpPost]
         public async Task<ActionResult<MonsterDto>> CreateMonster(CreateMonsterDto createDto)
         {
+            var username = "";
+            Console.WriteLine("========== CREATE MONSTER START ==========");
+            Console.WriteLine($"Request received at: {DateTime.UtcNow}");
+            Console.WriteLine($"Name: {createDto.Name}");
+            Console.WriteLine($"Danger: {createDto.Danger}");
+            Console.WriteLine($"Status: {createDto.Status}");
+
+            // ѕроверим, что DTO пришла полностью
+            Console.WriteLine($"All fields - MaxHP: {createDto.MaxHP}, AC: {createDto.AC}, Str: {createDto.Str}");
+
+            var userId = "temp-user-id";
+            Console.WriteLine($"UserId: {userId}");
+
+            // ѕроверим подключение к GatewayDbContext
+            try
+            {
+                username = await GetUsernameFromDb(userId);
+                Console.WriteLine($"Username from DB: {username}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR getting username: {ex.Message}");
+                return StatusCode(500, new { error = "Failed to get username" });
+            }
+
+            Console.WriteLine("Creating monster object...");
+
+
+
+            //var userId = "temp-user-id"; // TODO: получать из авторизации
+
+            var existingMonster = await _context.Monsters
+                .FirstOrDefaultAsync(m => m.CreatedBy == userId && m.Name == createDto.Name);
+
+            if (existingMonster != null)
+            {
+                return Conflict(new
+                {
+                    error = "” вас уже есть монстр с таким именем",
+                    existingMonsterId = existingMonster.Id
+                });
+            }
+
+            //var username = await GetUsernameFromDb(userId);
+
             var monster = new Monster
             {
                 Name = createDto.Name,
@@ -105,16 +150,23 @@ namespace SheetService.Controllers
                 Cha = createDto.Cha,
                 Danger = createDto.Danger,
                 Description = createDto.Description,
-                CreatedBy = "temp-user-id",
+                CreatedBy = userId,
+                CreatedByUsername = username,
                 Status = createDto.Status,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
             _context.Monsters.Add(monster);
-            await _context.SaveChangesAsync();
 
-            var username = "temp-user";
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("unique constraint") == true)
+            {
+                return Conflict(new { error = "ћонстр с таким именем уже существует" });
+            }
 
             var result = new MonsterDto
             {
@@ -131,7 +183,7 @@ namespace SheetService.Controllers
                 Danger = monster.Danger,
                 Description = monster.Description,
                 CreatedBy = monster.CreatedBy,
-                CreatedByUsername = username,
+                CreatedByUsername = monster.CreatedByUsername,
                 Status = monster.Status,
                 CreatedAt = monster.CreatedAt,
                 UpdatedAt = monster.UpdatedAt
@@ -143,11 +195,26 @@ namespace SheetService.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult<MonsterDto>> UpdateMonster(Guid id, CreateMonsterDto updateDto)
         {
+            var userId = "temp-user-id"; // TODO: получать из авторизации
             var monster = await _context.Monsters.FindAsync(id);
 
             if (monster == null)
             {
                 return NotFound();
+            }
+
+            var existingMonster = await _context.Monsters
+                .FirstOrDefaultAsync(m => m.CreatedBy == userId &&
+                                           m.Name == updateDto.Name &&
+                                           m.Id != id);
+
+            if (existingMonster != null)
+            {
+                return Conflict(new
+                {
+                    error = "” вас уже есть другой монстр с таким именем",
+                    existingMonsterId = existingMonster.Id
+                });
             }
 
             monster.Name = updateDto.Name;
@@ -164,9 +231,16 @@ namespace SheetService.Controllers
             monster.Status = updateDto.Status;
             monster.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("unique constraint") == true)
+            {
+                return Conflict(new { error = "ћонстр с таким именем уже существует" });
+            }
 
-            var username = await GetUsernameFromGateway(monster.CreatedBy);
+            var username = await GetUsernameFromDb(monster.CreatedBy);
 
             var result = new MonsterDto
             {
@@ -208,50 +282,20 @@ namespace SheetService.Controllers
             return NoContent();
         }
 
-        private async Task<string> GetUsernameFromGateway(string userId)
+        private async Task<string> GetUsernameFromDb(string userId)
         {
-            try
-            {
-                var client = _httpClientFactory.CreateClient();
-                client.BaseAddress = new Uri("http://api-gateway-service:8080");
-
-                var cookie = Request.Headers["Cookie"].ToString();
-                if (!string.IsNullOrEmpty(cookie))
-                {
-                    client.DefaultRequestHeaders.Add("Cookie", cookie);
-                }
-
-                var response = await client.GetAsync($"/api/auth/user/{userId}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var userData = await response.Content.ReadFromJsonAsync<UserInfo>();
-                    return userData?.Username ?? "Unknown";
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to get username for user {userId}: {ex.Message}");
-            }
-
-            return "Unknown";
+            var user = await _gatewayContext.Users.FindAsync(userId);
+            return user?.Username ?? "Unknown";
         }
 
-        private async Task<Dictionary<string, string>> GetUsernamesFromGateway(List<string> userIds)
+        private async Task<Dictionary<string, string>> GetUsernamesFromDb(List<string> userIds)
         {
-            var result = new Dictionary<string, string>();
+            if (userIds == null || !userIds.Any())
+                return new Dictionary<string, string>();
 
-            foreach (var userId in userIds)
-            {
-                result[userId] = await GetUsernameFromGateway(userId);
-            }
-
-            return result;
+            return await _gatewayContext.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.Username);
         }
-    }
-
-    public class UserInfo
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
     }
 }

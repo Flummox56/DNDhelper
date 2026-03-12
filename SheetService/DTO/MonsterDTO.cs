@@ -12,7 +12,7 @@ namespace SheetService.DTOs
         public int Int { get; set; }
         public int Wis { get; set; }
         public int Cha { get; set; }
-        public int Danger { get; set; }
+        public double Danger { get; set; }
         public string Description { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
         public string CreatedByUsername { get; set; } = string.Empty;
@@ -32,7 +32,7 @@ namespace SheetService.DTOs
         public int Int { get; set; }
         public int Wis { get; set; }
         public int Cha { get; set; }
-        public int Danger { get; set; }
+        public double Danger { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = "private";
     }

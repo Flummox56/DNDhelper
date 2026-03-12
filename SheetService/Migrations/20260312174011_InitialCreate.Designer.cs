@@ -12,7 +12,7 @@ using SheetService.Data;
 namespace SheetService.Migrations
 {
     [DbContext(typeof(SheetDbContext))]
-    [Migration("20260307191334_InitialCreate")]
+    [Migration("20260312174011_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -53,8 +53,13 @@ namespace SheetService.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
-                    b.Property<int>("Danger")
-                        .HasColumnType("integer")
+                    b.Property<string>("CreatedByUsername")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_username");
+
+                    b.Property<double>("Danger")
+                        .HasColumnType("double precision")
                         .HasColumnName("danger");
 
                     b.Property<string>("Description")
@@ -103,6 +108,10 @@ namespace SheetService.Migrations
 
                     b.HasIndex("Status")
                         .HasDatabaseName("idx_monsters_status");
+
+                    b.HasIndex("CreatedBy", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("idx_monsters_created_by_name");
 
                     b.ToTable("monsters", (string)null);
                 });
