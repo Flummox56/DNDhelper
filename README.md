@@ -47,6 +47,7 @@ POST   /logout       - выход
   "description": "Зеленый",      // string
   "status": "private"            // "private" или "public"
 }
+```
 # 1. Регистрация
 
 ### Ответ сервера (GET, POST, PATCH)
@@ -71,7 +72,7 @@ POST   /logout       - выход
   "createdAt": "2024-03-12T10:30:00Z",
   "updatedAt": "2024-03-12T10:30:00Z"
 }
-  -b cookies.txt
+```
 
 ## Примеры запросов (JavaScript)
 
@@ -90,6 +91,7 @@ await fetch(`${baseUrl}/auth/register`, {
     password: 'password123'
   })
 });
+
 # Подключиться к PostgreSQL
 // 2. Вход
 await fetch(`${baseUrl}/auth/login`, {
@@ -142,7 +144,7 @@ await fetch(`${baseUrl}/monsters/123e4567-e89b-12d3-a456-426614174000`, {
     // остальные поля опциональны
   })
 });
-│   │   └── AuthModels.cs                 # Request/Response модели
+
 // 6. Удаление монстра
 await fetch(`${baseUrl}/monsters/123e4567-e89b-12d3-a456-426614174000`, {
   method: 'DELETE',
