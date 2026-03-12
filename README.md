@@ -1,3 +1,4 @@
+
 # DNDhelper API
 
 ## Единая точка входа
@@ -20,14 +21,14 @@ POST   /logout       - выход
 ```
 
 ### Monsters Service (`/api/monsters`)
-```
-GET    /             - список всех монстров
-GET    /{id}         - монстр по ID
-POST   /             - создать монстра
-PATCH  /{id}         - обновить монстра
-DELETE /{id}         - удалить монстра
-```
 
+### Авторизация (`/api/auth`)
+
+| Метод | Endpoint | Описание | Тело запроса |
+|-------|----------|----------|--------------|
+| POST | `/register` | Регистрация нового пользователя | `{ "username": "string", "email": "string", "password": "string" }` |
+| POST | `/login` | Вход в систему | `{ "username": "string", "password": "string" }` |
+| POST | `/logout` | Выход из системы | - |
 ## Модель монстра
 
 ### Поля для создания (POST/PATCH)
@@ -46,7 +47,7 @@ DELETE /{id}         - удалить монстра
   "description": "Зеленый",      // string
   "status": "private"            // "private" или "public"
 }
-```
+# 1. Регистрация
 
 ### Ответ сервера (GET, POST, PATCH)
 ```json
@@ -70,7 +71,7 @@ DELETE /{id}         - удалить монстра
   "createdAt": "2024-03-12T10:30:00Z",
   "updatedAt": "2024-03-12T10:30:00Z"
 }
-```
+  -b cookies.txt
 
 ## Примеры запросов (JavaScript)
 
@@ -89,7 +90,7 @@ await fetch(`${baseUrl}/auth/register`, {
     password: 'password123'
   })
 });
-
+# Подключиться к PostgreSQL
 // 2. Вход
 await fetch(`${baseUrl}/auth/login`, {
   method: 'POST',
@@ -141,7 +142,7 @@ await fetch(`${baseUrl}/monsters/123e4567-e89b-12d3-a456-426614174000`, {
     // остальные поля опциональны
   })
 });
-
+│   │   └── AuthModels.cs                 # Request/Response модели
 // 6. Удаление монстра
 await fetch(`${baseUrl}/monsters/123e4567-e89b-12d3-a456-426614174000`, {
   method: 'DELETE',
@@ -175,7 +176,7 @@ docker compose logs -f nginx
 
 # Подключение к БД монстров
 docker exec -it sheet_storage psql -U sheet_user -d monster_db
-```
+├── docker-compose.override.yml
 
 ## Главные правила
 1. **Все запросы** с `credentials: 'include'`
@@ -183,3 +184,54 @@ docker exec -it sheet_storage psql -U sheet_user -d monster_db
 3. **POST/PATCH** всегда с Content-Type: application/json
 4. **Имена монстров** уникальны для каждого пользователя
 5. **danger** принимает дробные числа (0.25, 0.5, 1.5 и т.д.)
+└── README.md
+```
+
+## Конфигурация
+
+### Переменные окружения (в docker-compose.yml)
+
+```yaml
+# PostgreSQL
+POSTGRES_DB: auth_db
+POSTGRES_USER: auth_user
+POSTGRES_PASSWORD: auth_password
+
+# API
+ASPNETCORE_ENVIRONMENT: Development
+ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=auth_db;Username=auth_user;Password=auth_password
+```
+
+## Примечания
+
+1. **Базовый URL API**: `http://localhost:8080`
+2. **Авторизация** работает через cookies
+3. **Все запросы к защищенным эндпоинтам** должны включать `credentials: 'include'`
+4. **Swagger документация** доступна по адресу `/swagger`
+
+### Пример запроса с фронтенда
+
+```javascript
+// Регистрация
+const register = async () => {
+  const response = await fetch('http://localhost:8080/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      username: 'user123',
+      email: 'user@example.com',
+      password: 'password123'
+    })
+  });
+  return response.json();
+};
+
+// Получение текущего пользователя
+const getMe = async () => {
+  const response = await fetch('http://localhost:8080/api/auth/me', {
+    credentials: 'include'
+  });
+  return response.json();
+};
+```
