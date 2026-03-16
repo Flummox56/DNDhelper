@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SheetService.Data;
+using SheetService.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,8 @@ app.UseCors("Development");
 
 //app.UseAuthentication();
 //app.UseAuthorization();
+
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.MapControllers();
 
