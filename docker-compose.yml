@@ -39,6 +39,26 @@ services:
     networks:
       - dndhelper_network
 
+  scene-storage:
+    image: postgres:16
+    container_name: scene_storage
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SCENE_DB_NAME}
+      POSTGRES_USER: ${SCENE_DB_USER}
+      POSTGRES_PASSWORD: ${SCENE_DB_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - scene_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SCENE_DB_USER} -d ${SCENE_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dndhelper_network
+
   api-gateway-service:
     build:
       context: .
@@ -75,6 +95,25 @@ services:
       - ConnectionStrings__DefaultConnection=Host=sheet-storage;Port=5432;Database=${SHEET_DB_NAME};Username=${SHEET_DB_USER};Password=${SHEET_DB_PASSWORD}
     networks:
       - dndhelper_network
+
+  scene-service:
+    build:
+      context: .
+      dockerfile: SceneService/Dockerfile
+    container_name: scene_service
+    restart: unless-stopped
+    depends_on:
+      scene-storage:
+        condition: service_healthy
+      sheet-storage:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=scene-storage;Port=5432;Database=${SCENE_DB_NAME};Username=${SCENE_DB_USER};Password=${SCENE_DB_PASSWORD}
+      - ConnectionStrings__MonsterConnection=Host=sheet-storage;Port=5432;Database=${SHEET_DB_NAME};Username=${SHEET_DB_USER};Password=${SHEET_DB_PASSWORD}
+    networks:
+      - dndhelper_network
       
   nginx:
     build:
@@ -87,7 +126,8 @@ services:
       - "443:443"
     depends_on:
       - api-gateway-service
-      - sheet-service 
+      - sheet-service
+      - scene-service
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
@@ -96,6 +136,7 @@ services:
 volumes:
   api_gateway_data:
   sheet_data:
+  scene_data:
 
 networks:
   dndhelper_network:
